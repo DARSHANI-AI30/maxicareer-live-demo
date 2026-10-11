@@ -800,6 +800,82 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToSite, currentU
         >
           {selectedStudent && (
             <div className="space-y-6">
+              {/* Course Confirmation Banner for Pending Registrations */}
+              {selectedStudent.status === 'pending' && (
+                <div className="rounded-[14px] border border-amber-300 bg-amber-50/80 p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-800 uppercase tracking-wider">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                        <span>New Course Registration • Awaiting Confirmation</span>
+                      </div>
+                      <h4 className="text-[15px] font-bold text-[#0D1B3E] mt-0.5">
+                        {selectedStudent.planName}
+                      </h4>
+                      <p className="text-[12.5px] text-[#5B6885]">
+                        Review registration details and confirm course enrollment to assign a mentor and activate their roadmap.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-amber-200/60">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        patchStudent(selectedStudent._id, {
+                          status: 'enrolled',
+                          mentorAssigned:
+                            !selectedStudent.mentorAssigned || selectedStudent.mentorAssigned === 'Unassigned'
+                              ? 'Sneha Sen'
+                              : selectedStudent.mentorAssigned,
+                        });
+                        addAudit(
+                          'Students',
+                          'Confirmed course enrollment',
+                          `${selectedStudent.name}: ${selectedStudent.planName} → Enrolled`
+                        );
+                        notify({
+                          title: `Course enrollment confirmed: ${selectedStudent.name}`,
+                          body: `Confirmed for ${selectedStudent.planName}. Assigned mentor: Sneha Sen.`,
+                          category: 'applications',
+                          priority: 'high',
+                          link: 'students',
+                        });
+                        toast(`Course confirmed for ${selectedStudent.name}! Enrolled in ${selectedStudent.planName}.`);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-emerald-600 hover:bg-emerald-700 text-white text-[12.5px] font-bold shadow-xs transition-colors"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Confirm Course &amp; Enroll</span>
+                    </button>
+
+                    <a
+                      href={`https://wa.me/${selectedStudent.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                        `Hello ${selectedStudent.name}! Congratulations, your course registration for "${selectedStudent.planName}" at MaxiCareer has been verified and confirmed! Our mentorship team is ready to schedule your 1:1 onboarding session.`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-[12.5px] font-semibold border border-emerald-300/80 transition-colors"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Send WhatsApp Confirmation</span>
+                    </a>
+
+                    <a
+                      href={`mailto:${selectedStudent.email}?subject=${encodeURIComponent(
+                        `MaxiCareer Course Confirmation: ${selectedStudent.planName}`
+                      )}&body=${encodeURIComponent(
+                        `Dear ${selectedStudent.name},\n\nWe are delighted to confirm your registration for the ${selectedStudent.planName} at MaxiCareer!\n\nOur team has verified your details and your assigned mentor will be in touch shortly to schedule your personalized 1:1 strategy session.\n\nWarm regards,\nMaxiCareer Team`
+                      )}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-blue-100 hover:bg-blue-200 text-blue-900 text-[12.5px] font-semibold border border-blue-300/80 transition-colors"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-blue-700" />
+                      <span>Send Email Confirmation</span>
+                    </a>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Status">
                   <Select

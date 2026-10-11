@@ -117,6 +117,7 @@ export interface StudentProfile {
   name: string;
   email: string;
   phone: string;
+  city?: string;
   profession: UserProfession;
   professionLabel: string;
   institutionOrCompany: string;
@@ -127,7 +128,7 @@ export interface StudentProfile {
   registeredDate: string;
   roadmapProgress: number;
   avatarUrl?: string;
-  authProvider: 'google' | 'email';
+  authProvider?: 'google' | 'email' | 'credentials';
 }
 
 export interface ApiResponse<T = unknown> {

@@ -19,6 +19,11 @@ import {
   Check,
   Copy,
   ExternalLink,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Send,
+  Inbox,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -63,10 +68,26 @@ export const StudentPortalModal: React.FC<StudentPortalModalProps> = ({
   const [registerStep, setRegisterStep] = useState<number>(1); // 1: Profession, 2: Pricing Plan, 3: Details & Submit
 
   // Login form state
+  const [loginMethod, setLoginMethod] = useState<'password' | 'mail' | 'new_account'>('password');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Sign In using Mail state
+  const [mailInput, setMailInput] = useState('');
+  const [mailSent, setMailSent] = useState(false);
+  const [mailCode, setMailCode] = useState('742918');
+  const [mailCodeInput, setMailCodeInput] = useState('742918');
+  const [mailSuccessMessage, setMailSuccessMessage] = useState('');
+
+  // Sign Up with Details and Password state
+  const [signUpName, setSignUpName] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPhone, setSignUpPhone] = useState('+91 ');
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
 
   // Selected add-on services
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([]);
@@ -205,11 +226,11 @@ export const StudentPortalModal: React.FC<StudentPortalModalProps> = ({
     }, 650);
   };
 
-  // Regular Email Login Handler
-  const handleEmailLogin = (e: React.FormEvent) => {
+  // Details & Password Login Handler
+  const handleEmailPasswordLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginEmail.trim()) {
-      setLoginError('Please enter your registered email address.');
+      setLoginError('Please enter your registered email address or student ID.');
       return;
     }
     if (!loginPassword.trim()) {
@@ -221,17 +242,209 @@ export const StudentPortalModal: React.FC<StudentPortalModalProps> = ({
     setLoginError('');
 
     setTimeout(() => {
+      const profLabelMap: Record<UserProfession, string> = {
+        school: 'School Student (Senior High)',
+        college: 'College Student (Undergraduate)',
+        fresher: 'Fresher / PSW (2025/2026 Graduate)',
+        working_professional: 'Working Professional',
+      };
+      const institutionMap: Record<UserProfession, string> = {
+        school: 'St. Xavier High School',
+        college: 'National Institute of Technology',
+        fresher: 'Delhi University / Coventry University UK',
+        working_professional: 'Tech Enterprise Solutions',
+      };
+      const detailMap: Record<UserProfession, string> = {
+        school: 'Class 12 • Step-Ready Career Program',
+        college: 'Final Year CSE • Step-Next Career Program',
+        fresher: 'Recent Graduate • Step-In Career Program',
+        working_professional: '3 Years Experience • Step-Up Career Program',
+      };
+
       const demoUser = DEMO_STUDENT_PROFILES[selectedProfession];
+      const cleanName =
+        loginEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ||
+        demoUser.name;
+      const plan = PRICING_PLANS[selectedProfession][0];
+
       const profile: StudentProfile = {
         ...demoUser,
-        name: loginEmail.split('@')[0] || demoUser.name,
-        email: loginEmail,
+        id: `user-${Date.now()}`,
+        name: cleanName,
+        email: loginEmail.trim(),
+        profession: selectedProfession,
+        professionLabel: profLabelMap[selectedProfession],
+        institutionOrCompany: institutionMap[selectedProfession],
+        detail: detailMap[selectedProfession],
+        planName: plan?.name || 'Career Acceleration Program',
+        planPrice: plan?.price || 15999,
+        registeredDate: new Date().toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+        roadmapProgress: 65,
+        authProvider: 'credentials',
       };
 
       setIsLoggingIn(false);
       onLoginSuccess(profile);
       onClose();
     }, 500);
+  };
+
+  // Sign In Using Mail (Magic Link / OTP Code)
+  const handleSendMailLink = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mailInput.trim() || !mailInput.includes('@')) {
+      setLoginError('Please enter a valid email address to receive your sign-in link.');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    setLoginError('');
+
+    setTimeout(() => {
+      setIsLoggingIn(false);
+      setMailSent(true);
+      const generatedCode = String(Math.floor(100000 + Math.random() * 900000));
+      setMailCode(generatedCode);
+      setMailCodeInput(generatedCode);
+      setMailSuccessMessage(`A secure magic sign-in code has been sent to ${mailInput.trim()}. You can verify instantly below!`);
+    }, 600);
+  };
+
+  // Verify Mail Code & Sign In
+  const handleVerifyMailCode = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!mailCodeInput.trim()) {
+      setLoginError('Please enter the 6-digit verification code sent to your mail.');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    setLoginError('');
+
+    setTimeout(() => {
+      const profLabelMap: Record<UserProfession, string> = {
+        school: 'School Student (Senior High)',
+        college: 'College Student (Undergraduate)',
+        fresher: 'Fresher / PSW (2025/2026 Graduate)',
+        working_professional: 'Working Professional',
+      };
+      const institutionMap: Record<UserProfession, string> = {
+        school: 'St. Xavier High School',
+        college: 'National Institute of Technology',
+        fresher: 'Delhi University / Coventry University UK',
+        working_professional: 'Tech Enterprise Solutions',
+      };
+      const detailMap: Record<UserProfession, string> = {
+        school: 'Class 12 • Step-Ready Career Program',
+        college: 'Final Year CSE • Step-Next Career Program',
+        fresher: 'Recent Graduate • Step-In Career Program',
+        working_professional: '3 Years Experience • Step-Up Career Program',
+      };
+
+      const cleanName =
+        mailInput.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ||
+        'Student Member';
+      const plan = PRICING_PLANS[selectedProfession][0];
+
+      const profile: StudentProfile = {
+        id: `mail-user-${Date.now()}`,
+        name: cleanName,
+        email: mailInput.trim(),
+        phone: OFFICIAL_PHONE,
+        profession: selectedProfession,
+        professionLabel: profLabelMap[selectedProfession],
+        institutionOrCompany: institutionMap[selectedProfession],
+        detail: detailMap[selectedProfession],
+        planName: plan?.name || 'Career Acceleration Program',
+        planPrice: plan?.price || 15999,
+        registeredDate: new Date().toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+        roadmapProgress: 60,
+        authProvider: 'email',
+        avatarUrl:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      };
+
+      setIsLoggingIn(false);
+      onLoginSuccess(profile);
+      onClose();
+    }, 500);
+  };
+
+  // Sign Up with Details and Password Handler
+  const handleSignUpWithDetails = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signUpName.trim()) {
+      setLoginError('Please enter your full name.');
+      return;
+    }
+    if (!signUpEmail.trim() || !signUpEmail.includes('@')) {
+      setLoginError('Please enter a valid email address.');
+      return;
+    }
+    if (!signUpPassword.trim() || signUpPassword.length < 6) {
+      setLoginError('Please choose a password with at least 6 characters.');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    setLoginError('');
+
+    setTimeout(() => {
+      const profLabelMap: Record<UserProfession, string> = {
+        school: 'School Student (Senior High)',
+        college: 'College Student (Undergraduate)',
+        fresher: 'Fresher / PSW (2025/2026 Graduate)',
+        working_professional: 'Working Professional',
+      };
+      const institutionMap: Record<UserProfession, string> = {
+        school: 'High School',
+        college: 'College / University',
+        fresher: 'Recent Graduate',
+        working_professional: 'Industry Organization',
+      };
+      const detailMap: Record<UserProfession, string> = {
+        school: 'Enrolled in Step-Ready Program',
+        college: 'Enrolled in Step-Next Program',
+        fresher: 'Enrolled in Step-In Program',
+        working_professional: 'Enrolled in Step-Up Program',
+      };
+
+      const plan = PRICING_PLANS[selectedProfession][0];
+
+      const profile: StudentProfile = {
+        id: `student-${Date.now()}`,
+        name: signUpName.trim(),
+        email: signUpEmail.trim(),
+        phone: signUpPhone.trim() || OFFICIAL_PHONE,
+        profession: selectedProfession,
+        professionLabel: profLabelMap[selectedProfession],
+        institutionOrCompany: institutionMap[selectedProfession],
+        detail: detailMap[selectedProfession],
+        planName: plan?.name || 'Career Acceleration Program',
+        planPrice: plan?.price || 15999,
+        registeredDate: new Date().toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+        roadmapProgress: 35,
+        authProvider: 'credentials',
+        avatarUrl:
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      };
+
+      setIsLoggingIn(false);
+      onLoginSuccess(profile);
+      onClose();
+    }, 600);
   };
 
   // Quick Demo Login Handler
@@ -714,106 +927,343 @@ export const StudentPortalModal: React.FC<StudentPortalModalProps> = ({
                 </button>
               </div>
 
-              {/* Divider */}
-              <div className="relative flex items-center justify-center">
-                <div className="border-t border-slate-200 w-full" />
-                <span className="bg-white px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Or with email
-                </span>
-              </div>
-
-              {/* Email / Password Form */}
-              <form onSubmit={handleEmailLogin} className="space-y-4">
-                {loginError && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-semibold">
-                    {loginError}
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Registered Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      id="login-email-input"
-                      type="email"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      placeholder="student@example.com"
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-bold text-slate-700">Password</label>
-                    <span className="text-[11px] text-blue-600 font-semibold cursor-pointer hover:underline">
-                      Forgot password?
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      id="login-password-input"
-                      type="password"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
+              {/* Sign In Method Selector Tabs */}
+              <div className="flex p-1 bg-slate-100 rounded-xl gap-1">
+                <button
+                  type="button"
+                  id="tab-method-password"
+                  onClick={() => {
+                    setLoginMethod('password');
+                    setLoginError('');
+                  }}
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    loginMethod === 'password' || loginMethod === 'new_account'
+                      ? 'bg-white text-blue-600 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Details &amp; Password</span>
+                </button>
 
                 <button
-                  id="submit-login-btn"
-                  type="submit"
-                  disabled={isLoggingIn}
-                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/25 transition-all flex items-center justify-center gap-2"
+                  type="button"
+                  id="tab-method-mail"
+                  onClick={() => {
+                    setLoginMethod('mail');
+                    setLoginError('');
+                  }}
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    loginMethod === 'mail'
+                      ? 'bg-white text-blue-600 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 >
-                  <span>{isLoggingIn ? 'Verifying...' : 'Sign In to Portal'}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <Mail className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Sign In using Mail</span>
                 </button>
-              </form>
-
-              {/* Instant 1-Click Demo Profiles for evaluation - 4 buttons */}
-              <div className="pt-2 border-t border-slate-100">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-                  Instant 1-Click Demo Access
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemoLogin('school')}
-                    className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium text-center"
-                  >
-                    Demo: School
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemoLogin('college')}
-                    className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium text-center"
-                  >
-                    Demo: College
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemoLogin('fresher')}
-                    className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium text-center"
-                  >
-                    Demo: Fresher
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemoLogin('working_professional')}
-                    className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium text-center"
-                  >
-                    Demo: Pro
-                  </button>
-                </div>
               </div>
+
+              {loginError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-semibold">
+                  {loginError}
+                </div>
+              )}
+
+              {/* METHOD 1: DETAILS & PASSWORD (SIGN IN OR SIGN UP) */}
+              {(loginMethod === 'password' || loginMethod === 'new_account') && (
+                <div className="space-y-4">
+                  {loginMethod === 'password' ? (
+                    <form onSubmit={handleEmailPasswordLogin} className="space-y-3.5">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Email Address or Student ID
+                        </label>
+                        <div className="relative">
+                          <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            id="login-email-input"
+                            type="text"
+                            value={loginEmail}
+                            onChange={(e) => setLoginEmail(e.target.value)}
+                            placeholder="student@example.com"
+                            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs font-bold text-slate-700">Password</label>
+                          <span
+                            onClick={() => {
+                              setLoginError('');
+                              setLoginMethod('mail');
+                            }}
+                            className="text-[11px] text-blue-600 font-semibold cursor-pointer hover:underline"
+                          >
+                            Sign in using mail instead?
+                          </span>
+                        </div>
+                        <div className="relative">
+                          <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            id="login-password-input"
+                            type={showPassword ? 'text' : 'password'}
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
+                            placeholder="••••••••"
+                            className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        id="submit-login-btn"
+                        type="submit"
+                        disabled={isLoggingIn}
+                        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/25 transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
+                      >
+                        <span>{isLoggingIn ? 'Verifying Credentials...' : 'Sign In with Password'}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+
+                      <div className="pt-1 text-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLoginMethod('new_account');
+                            setLoginError('');
+                          }}
+                          className="text-xs text-slate-600 hover:text-blue-600 font-medium"
+                        >
+                          Don&apos;t have an account?{' '}
+                          <span className="font-bold text-blue-600 underline">Sign up with details &amp; password</span>
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    /* SIGN UP WITH DETAILS & PASSWORD */
+                    <form onSubmit={handleSignUpWithDetails} className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Full Name</label>
+                        <div className="relative">
+                          <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            id="signup-name-input"
+                            type="text"
+                            value={signUpName}
+                            onChange={(e) => setSignUpName(e.target.value)}
+                            placeholder="Your Full Name"
+                            className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
+                          <div className="relative">
+                            <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                            <input
+                              id="signup-email-input"
+                              type="email"
+                              value={signUpEmail}
+                              onChange={(e) => setSignUpEmail(e.target.value)}
+                              placeholder="student@example.com"
+                              className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">WhatsApp / Phone</label>
+                          <div className="relative">
+                            <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                            <input
+                              id="signup-phone-input"
+                              type="tel"
+                              value={signUpPhone}
+                              onChange={(e) => setSignUpPhone(e.target.value)}
+                              placeholder="+91 9876543210"
+                              className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Create Password</label>
+                        <div className="relative">
+                          <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            id="signup-password-input"
+                            type={showSignUpPassword ? 'text' : 'password'}
+                            value={signUpPassword}
+                            onChange={(e) => setSignUpPassword(e.target.value)}
+                            placeholder="Min 6 characters"
+                            className="w-full pl-10 pr-10 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                            aria-label={showSignUpPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showSignUpPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        id="submit-signup-btn"
+                        type="submit"
+                        disabled={isLoggingIn}
+                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <span>{isLoggingIn ? 'Creating Account...' : 'Register & Sign In with Details'}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+
+                      <div className="text-center pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLoginMethod('password');
+                            setLoginError('');
+                          }}
+                          className="text-xs text-slate-600 hover:text-blue-600 font-medium"
+                        >
+                          Already have an account?{' '}
+                          <span className="font-bold text-blue-600 underline">Sign in with password</span>
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+
+              {/* METHOD 2: SIGN IN USING MAIL (MAGIC LINK / OTP) */}
+              {loginMethod === 'mail' && (
+                <div className="space-y-4">
+                  <div className="p-3.5 bg-blue-50/80 rounded-xl border border-blue-200/80 text-xs text-slate-700 leading-relaxed">
+                    <div className="flex items-center gap-2 text-blue-700 font-bold mb-1">
+                      <Sparkles className="w-4 h-4 text-blue-600" />
+                      <span>Passwordless Email Sign-In</span>
+                    </div>
+                    Enter your email to sign in without remembering a password. We will send an instant verification link or code to your email.
+                  </div>
+
+                  {!mailSent ? (
+                    <form onSubmit={handleSendMailLink} className="space-y-3.5">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Your Email Address
+                        </label>
+                        <div className="relative">
+                          <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            id="magic-mail-input"
+                            type="email"
+                            value={mailInput}
+                            onChange={(e) => setMailInput(e.target.value)}
+                            placeholder="student@example.com"
+                            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        id="send-mail-link-btn"
+                        type="submit"
+                        disabled={isLoggingIn}
+                        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/25 transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
+                      >
+                        <Send className="w-4 h-4" />
+                        <span>{isLoggingIn ? 'Sending Sign-in Code...' : 'Send Sign-in Link & Code to Mail'}</span>
+                      </button>
+                    </form>
+                  ) : (
+                    /* Mail Code Sent State */
+                    <div className="space-y-4">
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800">
+                        <div className="flex items-center gap-2 font-bold mb-1">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>Verification Code Sent!</span>
+                        </div>
+                        {mailSuccessMessage}
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Enter 6-Digit Code
+                        </label>
+                        <div className="relative">
+                          <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            id="mail-code-input"
+                            type="text"
+                            maxLength={6}
+                            value={mailCodeInput}
+                            onChange={(e) => setMailCodeInput(e.target.value)}
+                            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="742918"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <button
+                          type="button"
+                          id="verify-mail-code-btn"
+                          onClick={() => handleVerifyMailCode()}
+                          disabled={isLoggingIn}
+                          className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 transition-colors cursor-pointer active:scale-[0.99]"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>{isLoggingIn ? 'Verifying Code...' : 'Verify Code & Sign In'}</span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setMailSent(false)}
+                          className="text-slate-500 hover:text-blue-600"
+                        >
+                          &larr; Use another email
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newCode = String(Math.floor(100000 + Math.random() * 900000));
+                            setMailCode(newCode);
+                            setMailCodeInput(newCode);
+                            setMailSuccessMessage(`New code sent: ${newCode}`);
+                          }}
+                          className="text-blue-600 font-bold hover:underline"
+                        >
+                          Resend Code
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Switch to Register */}
               <div className="text-center pt-2">

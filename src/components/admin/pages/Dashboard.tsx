@@ -351,7 +351,9 @@ export const Dashboard: React.FC<{ greeting: string }> = ({ greeting }) => {
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-[12px] text-[#7A869E]">Last updated {formatDate(new Date().toISOString(), true)}</p>
+          <p className="mt-4 text-[12px] text-[#7A869E]" suppressHydrationWarning>
+            Last updated {formatDate(new Date().toISOString(), true)}
+          </p>
         </Panel>
       </div>
     </div>

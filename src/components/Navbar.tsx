@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowRight, Mail, Phone, Sparkles, MessageCircle, ShieldCheck, Database } from 'lucide-react';
+import { Menu, X, ArrowRight, Mail, Phone, Sparkles, MessageCircle, ShieldCheck, Database, LogIn, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { scrollToSection } from '../lib/utils';
 import { BrandLogo } from './BrandLogo';
@@ -38,10 +38,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const navLinks = [
     { id: 'home', label: 'Home', href: '#home' },
-    // { id: 'career-programs', label: 'Programs', href: '#career-programs' }, // Kept in code, hidden per mentor instructions
+    { id: 'services', label: 'Programs & Courses', href: '#services' },
     { id: 'addon-services', label: 'Services', href: '#addon-services' },
     { id: 'about', label: 'About', href: '#about' },
-    { id: 'services', label: 'Offerings', href: '#services' },
     { id: 'why-us', label: 'Why Us', href: '#why-us' },
     { id: 'contact', label: 'Contact', href: '#contact' },
   ];
@@ -53,10 +52,9 @@ export const Navbar: React.FC<NavbarProps> = ({
       // Section spy
       const sections = [
         'home',
-        // 'career-programs',
+        'services',
         'addon-services',
         'about',
-        'services',
         'why-us',
         'contact',
       ];
@@ -141,8 +139,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             })}
           </nav>
 
-          {/* Far Right: Contact Email, WhatsApp, Book Consultation, and Corner Profile when logged in */}
-          <div className="hidden sm:flex items-center gap-2 xl:gap-3 flex-shrink-0">
+          {/* Far Right: Contact Email, WhatsApp, and Corner Login / Profile when logged in */}
+          <div className="hidden lg:flex items-center gap-2 xl:gap-3 flex-shrink-0">
             {/* Official Contact Email */}
             <a
               id="navbar-contact-email"
@@ -182,19 +180,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* Book a Consultation Button */}
-            <button
-              id="navbar-book-btn"
-              type="button"
-              onClick={handleBookClick}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 xl:px-4 xl:py-2 rounded-xl text-xs xl:text-sm font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] shadow-xs hover:shadow-md hover:shadow-blue-500/20 transition-all duration-200 whitespace-nowrap flex-shrink-0 active:scale-95"
-            >
-              <span>Book Consultation</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Corner Profile Menu (Only when user is logged in) */}
-            {userProfile && (
+            {/* Right Corner: Student Login button when logged out, or Profile menu when logged in */}
+            {!userProfile ? (
+              <button
+                id="navbar-student-login-btn"
+                type="button"
+                onClick={onOpenSignIn}
+                className="inline-flex items-center gap-2 px-4 py-2 xl:px-4.5 xl:py-2 rounded-xl text-xs xl:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow-md hover:shadow-blue-500/20 transition-all duration-200 whitespace-nowrap active:scale-95 cursor-pointer ring-offset-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                title="Student Login / Sign In"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Login</span>
+              </button>
+            ) : (
               <CornerProfileMenu
                 userProfile={userProfile}
                 onOpenSignIn={onOpenSignIn}
@@ -207,9 +205,33 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* Mobile & Tablet Right Controls: Profile when logged in + Hamburger Toggle */}
-          <div className="flex sm:hidden items-center gap-1.5">
-            {userProfile && (
+          {/* Mobile & Tablet Right Controls: Admin + Login or Profile + Hamburger Toggle */}
+          <div className="flex lg:hidden items-center gap-2">
+            {onOpenAdmin && (
+              <button
+                id="mobile-admin-shortcut-btn"
+                type="button"
+                onClick={onOpenAdmin}
+                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                title="Admin Portal"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                <span>Admin</span>
+              </button>
+            )}
+
+            {!userProfile ? (
+              <button
+                id="mobile-header-login-btn"
+                type="button"
+                onClick={onOpenSignIn}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-xs active:scale-95 cursor-pointer"
+                title="Student Login / Sign In"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Login</span>
+              </button>
+            ) : (
               <CornerProfileMenu
                 userProfile={userProfile}
                 onOpenSignIn={onOpenSignIn}
@@ -245,7 +267,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="md:hidden overflow-hidden bg-white/95 backdrop-blur-lg border-b border-slate-200 shadow-xl"
+            className="lg:hidden overflow-hidden bg-white/95 backdrop-blur-lg border-b border-slate-200 shadow-xl"
           >
             <div className="px-4 pt-3 pb-6 flex flex-col space-y-1.5">
               {navLinks.map((link) => {
@@ -311,6 +333,29 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 ) : (
                   <div className="space-y-2">
+                    <button
+                      id="mobile-nav-login-btn"
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        onOpenSignIn();
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-blue-50/90 border border-blue-200 text-blue-900 font-bold text-left transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#2563EB] text-white flex items-center justify-center shadow-xs">
+                          <LogIn className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold">Student Portal Login</div>
+                          <div className="text-[11px] text-blue-700">Sign in with email, password, or Google</div>
+                        </div>
+                      </div>
+                      <span className="text-[11px] bg-blue-200 text-blue-800 px-2.5 py-0.5 rounded-full font-bold">
+                        Login
+                      </span>
+                    </button>
+
                     <button
                       id="mobile-nav-book-btn"
                       type="button"

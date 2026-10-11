@@ -1,18 +1,47 @@
 import React, { useState } from 'react';
-import { Compass, Code2, Users, FileText, ArrowRight, Check } from 'lucide-react';
+import {
+  Compass,
+  Code2,
+  Users,
+  FileText,
+  ArrowRight,
+  Check,
+  Sparkles,
+  MessageCircle,
+  Mail,
+  ShieldCheck,
+  CheckCircle2,
+  GraduationCap,
+  Briefcase,
+  BookOpen,
+  UserCheck,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { SectionHeading } from './SectionHeading';
 import { ServiceDetailModal } from './ServiceDetailModal';
-import { ServiceItem } from '../types';
+import { ServiceItem, UserProfession } from '../types';
 import { ServicesBackground } from './SectionBackgrounds';
+import {
+  OFFICIAL_PHONE_DIGITS,
+  OFFICIAL_EMAIL,
+} from '../data/portalData';
+import { COURSE_PROGRAMS_DATA, CourseProgramConfig } from './CourseRegistrationModal';
+import { EmailModal, EmailModalData } from './EmailModal';
 
 interface ServicesSectionProps {
   onSelectService: (serviceTitle: string) => void;
+  onOpenRegisterProgram: (profession: UserProfession, programName: string) => void;
 }
 
-export const ServicesSection: React.FC<ServicesSectionProps> = ({ onSelectService }) => {
+export const ServicesSection: React.FC<ServicesSectionProps> = ({
+  onSelectService,
+  onOpenRegisterProgram,
+}) => {
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailModalData, setEmailModalData] = useState<EmailModalData | null>(null);
 
+  // Foundational Services
   const services: ServiceItem[] = [
     {
       id: 'career-guidance',
@@ -114,69 +143,216 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onSelectServic
     }
   };
 
+  // Direct WhatsApp Inquiry
+  const handleDirectWhatsApp = (programName: string, cohortBadge: string) => {
+    const text = `*MaxiCareer Mentorship Program Inquiry* 🚀\n--------------------------------\n*Program:* ${programName} (${cohortBadge})\nHello MaxiCareer Mentors, I am interested in enrolling in the *${programName}*. Please share the mentorship roadmap and schedule my 1:1 consultation session!`;
+    window.open(
+      `https://wa.me/${OFFICIAL_PHONE_DIGITS}?text=${encodeURIComponent(text)}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  };
+
+  // Direct Email Inquiry
+  const handleDirectEmail = (programName: string, cohortBadge: string) => {
+    setEmailModalData({
+      recipient: OFFICIAL_EMAIL,
+      subject: `MaxiCareer Mentorship Inquiry: ${programName} (${cohortBadge})`,
+      body: `Dear MaxiCareer Mentorship Team,\n\nI am interested in taking the ${programName} (${cohortBadge}).\nPlease provide details regarding the 1:1 mentorship schedule, syllabus, and consultation onboarding.\n\nThank you!`,
+      title: `Inquire: ${programName}`,
+      subtitle: `Direct to ${OFFICIAL_EMAIL}`,
+      category: programName,
+    });
+    setEmailModalOpen(true);
+  };
+
   return (
     <section id="services" className="py-20 lg:py-28 bg-[#F8FAFC] relative overflow-hidden">
       {/* Background Subtle Elements */}
       <ServicesBackground />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Section Heading */}
         <SectionHeading
-          badge="What We Offer"
-          title="Comprehensive"
-          highlight="Career Services"
-          description="Tailored guidance, modern skill programs, and dedicated mentorship designed to support you at every milestone of your career."
+          badge="Courses & Mentorship"
+          title="Career Programs &"
+          highlight="1:1 Mentorship"
+          description="Tailored for students and aspiring professionals at every milestone. Register with all required details to connect directly with your dedicated mentor via WhatsApp or Email."
         />
 
-        {/* 4 Cards in Responsive Grid: 4 columns on desktop, 2 on tablet, 1 on mobile */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-14">
-          {services.map((service, index) => {
-            const Icon = getIcon(service.iconName);
-            return (
-              <motion.div
-                key={service.id}
-                id={`service-card-${service.id}`}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.45, delay: index * 0.1, ease: 'easeOut' }}
-                className="group flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-white border border-slate-200/90 hover:border-blue-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 relative h-full"
-              >
-                <div>
-                  {/* Top Bar: Icon + Badge */}
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2563EB] group-hover:bg-[#2563EB] group-hover:text-white group-hover:scale-110 transition-all duration-300 shadow-xs">
-                      <Icon className="w-6 h-6 transition-transform duration-300" />
+        {/* ------------------------------------------------------------------ */}
+        {/* 4 Specialized Career Programs matching user's uploaded image        */}
+        {/* ------------------------------------------------------------------ */}
+        <div className="mt-14">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-blue-600" />
+                <span>Specialized Mentorship Courses</span>
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                Choose your cohort below and register with your details for personalized 1:1 career guidance.
+              </p>
+            </div>
+            <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full w-fit">
+              Direct Mentor Connect Included
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {COURSE_PROGRAMS_DATA.map((program, index) => {
+              return (
+                <motion.div
+                  key={program.id}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-20px' }}
+                  transition={{ duration: 0.45, delay: index * 0.08 }}
+                  className="bg-white rounded-2xl border border-slate-200/95 p-6 flex flex-col justify-between shadow-sm hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 relative group"
+                >
+                  <div>
+                    {/* Dark Cohort Badge matching Image Header */}
+                    <div className="w-full bg-[#1E293B] text-white py-3 px-3 rounded-xl text-center font-bold text-sm tracking-wide shadow-xs mb-5 group-hover:bg-blue-900 transition-colors">
+                      {program.cohortBadge}
                     </div>
-                    <span className="text-[11px] font-bold text-[#2563EB] bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-full">
-                      {service.badge}
-                    </span>
+
+                    {/* Program Title */}
+                    <h4 className="text-lg sm:text-xl font-black text-[#0F172A] mb-2 tracking-tight">
+                      {program.name}
+                    </h4>
+
+                    {/* Tagline / Subtitle */}
+                    <p className="text-xs sm:text-sm font-medium text-slate-600 mb-5">
+                      {program.tagline}
+                    </p>
+
+                    {/* Action Button: Register for Mentorship (No Prices!) */}
+                    <button
+                      type="button"
+                      onClick={() => onOpenRegisterProgram(program.profession, program.name)}
+                      className="w-full py-3 px-4 rounded-xl font-bold text-sm text-white bg-[#2563EB] hover:bg-[#1D4ED8] shadow-md shadow-blue-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 mb-3"
+                    >
+                      <span>Register for Mentorship</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+
+                    {/* Direct Contact Options: WhatsApp & Email */}
+                    <div className="grid grid-cols-2 gap-2 mb-6">
+                      <button
+                        type="button"
+                        onClick={() => handleDirectWhatsApp(program.name, program.cohortBadge)}
+                        className="py-2 px-2 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center justify-center gap-1.5 transition-colors"
+                        title="Chat on WhatsApp"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>WhatsApp</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDirectEmail(program.name, program.cohortBadge)}
+                        className="py-2 px-2 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 flex items-center justify-center gap-1.5 transition-colors"
+                        title="Send Email"
+                      >
+                        <Mail className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Send Mail</span>
+                      </button>
+                    </div>
+
+                    {/* Inclusions Checklist with Green Checkmarks */}
+                    <div className="border-t border-slate-100 pt-5 space-y-2.5">
+                      {program.features.map((feature, fIdx) => (
+                        <div
+                          key={fIdx}
+                          className="flex items-start gap-2 text-xs sm:text-sm text-slate-700"
+                        >
+                          <Check className="w-4 h-4 text-emerald-600 font-black shrink-0 mt-0.5" />
+                          <span className="font-medium">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* Title */}
-                  <h3 className="text-lg font-bold text-[#0F172A] mb-3 group-hover:text-[#2563EB] transition-colors duration-200">
-                    {service.title}
-                  </h3>
+                  {/* Card Footer: Duration & Support */}
+                  <div className="pt-5 mt-6 border-t border-slate-100">
+                    <div className="text-center">
+                      <div className="text-xs font-black text-slate-900 tracking-tight">
+                        {program.support}
+                      </div>
+                      <div className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                        {program.duration}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
 
-                  {/* Description */}
-                  <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                    {service.shortDescription}
-                  </p>
-                </div>
+        {/* ------------------------------------------------------------------ */}
+        {/* Foundational Career Support Services                               */}
+        {/* ------------------------------------------------------------------ */}
+        <div className="mt-20 pt-16 border-t border-slate-200/80">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              Foundational Career Pillars
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1">
+              Explore the core skills and advisory services integrated into every MaxiCareer mentorship program.
+            </p>
+          </div>
 
-                {/* Bottom Actions */}
-                <div className="pt-4 border-t border-slate-100 mt-auto">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedService(service)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2563EB] hover:text-[#1D4ED8] group-hover:translate-x-0.5 transition-all focus:outline-none"
-                  >
-                    <span>Learn More</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {services.map((service, index) => {
+              const Icon = getIcon(service.iconName);
+              return (
+                <motion.div
+                  key={service.id}
+                  id={`service-card-${service.id}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-20px' }}
+                  transition={{ duration: 0.4, delay: index * 0.08 }}
+                  className="group flex flex-col justify-between p-6 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300"
+                >
+                  <div>
+                    {/* Top Bar: Icon + Badge */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2563EB] group-hover:bg-[#2563EB] group-hover:text-white transition-all shadow-xs">
+                        <Icon className="w-5 h-5 transition-transform" />
+                      </div>
+                      <span className="text-[10px] font-bold text-[#2563EB] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                        {service.badge}
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <h4 className="text-base font-bold text-[#0F172A] mb-2 group-hover:text-[#2563EB] transition-colors">
+                      {service.title}
+                    </h4>
+
+                    {/* Description */}
+                    <p className="text-slate-600 text-xs leading-relaxed mb-4">
+                      {service.shortDescription}
+                    </p>
+                  </div>
+
+                  {/* Learn More link */}
+                  <div className="pt-3 border-t border-slate-100 mt-auto">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedService(service)}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[#2563EB] hover:text-[#1D4ED8] transition-colors focus:outline-none"
+                    >
+                      <span>Explore Curriculum</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -191,6 +367,13 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ onSelectServic
           }}
         />
       )}
+
+      {/* Interactive Email Dispatch Modal */}
+      <EmailModal
+        isOpen={emailModalOpen}
+        data={emailModalData}
+        onClose={() => setEmailModalOpen(false)}
+      />
     </section>
   );
 };

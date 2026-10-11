@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Download, Upload, Plus, RefreshCw, MessageCircle, Mail, Trash2, Users, FileDown } from 'lucide-react';
+import { Download, Upload, Plus, RefreshCw, MessageCircle, Mail, Trash2, Users, FileDown, Check } from 'lucide-react';
 import { DbStudent } from '../../../types';
 import { useAdmin, MENTORS, COHORT_LABEL, roadmapProgress } from '../context';
 import { PageHeader, Button, IconButton, Badge, Select, SearchInput, Segmented, Th, Td, Avatar, Empty, StepMeter, Modal, Tone } from '../ui';
@@ -293,27 +293,47 @@ export const Students: React.FC = () => {
                         <div className="mc-num text-[12.5px] text-[#5B6885]">{inr(s.planPrice)}</div>
                       </Td>
                       <Td>
-                        <label className="relative inline-flex">
-                          <span className="sr-only">Status for {s.name}</span>
-                          <Badge tone={STATUS_TONE[s.status]} dot className="pr-6">
-                            {STATUS_LABEL[s.status]}
-                          </Badge>
-                          <select
-                            value={s.status}
-                            onChange={(e) => {
-                              patchStudent(s._id, { status: e.target.value as DbStudent['status'] });
-                              addAudit('Students', 'Changed status', `${s.name}: ${STATUS_LABEL[s.status]} → ${STATUS_LABEL[e.target.value as DbStudent['status']]}`);
-                            }}
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                          >
-                            {Object.entries(STATUS_LABEL).map(([k, l]) => (
-                              <option key={k} value={k}>
-                                {l}
-                              </option>
-                            ))}
-                          </select>
-                          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[9px] opacity-60">▼</span>
-                        </label>
+                        <div className="flex items-center gap-1.5">
+                          <label className="relative inline-flex">
+                            <span className="sr-only">Status for {s.name}</span>
+                            <Badge tone={STATUS_TONE[s.status]} dot className="pr-6">
+                              {STATUS_LABEL[s.status]}
+                            </Badge>
+                            <select
+                              value={s.status}
+                              onChange={(e) => {
+                                patchStudent(s._id, { status: e.target.value as DbStudent['status'] });
+                                addAudit('Students', 'Changed status', `${s.name}: ${STATUS_LABEL[s.status]} → ${STATUS_LABEL[e.target.value as DbStudent['status']]}`);
+                              }}
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                            >
+                              {Object.entries(STATUS_LABEL).map(([k, l]) => (
+                                <option key={k} value={k}>
+                                  {l}
+                                </option>
+                              ))}
+                            </select>
+                            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[9px] opacity-60">▼</span>
+                          </label>
+                          {s.status === 'pending' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                patchStudent(s._id, {
+                                  status: 'enrolled',
+                                  mentorAssigned: !s.mentorAssigned || s.mentorAssigned === 'Unassigned' ? 'Sneha Sen' : s.mentorAssigned,
+                                });
+                                addAudit('Students', 'Confirmed course enrollment', `${s.name} for ${s.planName} → Enrolled`);
+                                toast(`Course enrollment confirmed for ${s.name}! Assigned to ${!s.mentorAssigned || s.mentorAssigned === 'Unassigned' ? 'Sneha Sen' : s.mentorAssigned}.`);
+                              }}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[6px] bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-xs transition-colors shrink-0"
+                              title="1-Click Course Confirmation"
+                            >
+                              <Check className="w-3 h-3" />
+                              <span>Confirm</span>
+                            </button>
+                          )}
+                        </div>
                       </Td>
                       <Td>
                         <select
